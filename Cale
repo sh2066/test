@@ -1,44 +1,60 @@
 package calc1234;
 
-import java.util.*;
-import java.lang.Math; // Math.pow 함수를 위해 Math를 가져옴
+import java.util.Stack;
+import java.util.StringTokenizer;
 
 public class Cale {
     public static double eval(String exp) {
         StringTokenizer st = new StringTokenizer(exp);
-        Stack<Double> stack = new Stack<Double>();
+        Stack<Double> stack = new Stack<>();
 
-        while(st.hasMoreTokens()) {
+        while (st.hasMoreTokens()) {
             String tok = st.nextToken();
-            if(Infix2Postfix.opType(tok) > 0) {
-                if (Infix2Postfix.opType(tok) < 5 || Infix2Postfix.opType(tok) == 7) { // 지수 연산 확인
-                    double v1 = stack.pop();
-                    double v2 = stack.pop();
-                    double value = 0;
-
-                    switch (Infix2Postfix.opType(tok)) {
-                        case 1: // +
-                            value = v2 + v1;
-                            break;
-                        case 2: // -
-                            value = v2 - v1;
-                            break;
-                        case 3: // *
-                            value = v2 * v1;
-                            break;
-                        case 4: // /
-                            value = v2 / v1;
-                            break;
-                        case 7: // ^
-                            value = Math.pow(v2, v1); // 제곱 연산 처리
-                            break;
-                    }
-                    stack.push(value);
+            if (isOperator(tok)) { // 연산자 처리
+                if (stack.size() < 2) {
+                    throw new IllegalArgumentException("Invalid expression");
                 }
-            } else {
+                double operand2 = stack.pop();
+                double operand1 = stack.pop();
+                stack.push(calculate(operand1, operand2, tok));
+            } else { // 숫자 처리
                 stack.push(Double.parseDouble(tok));
             }
         }
+        if (stack.size() != 1) {
+            throw new IllegalArgumentException("Invalid expression result");
+        }
         return stack.pop();
+    }
+
+    private static boolean isOperator(String token) {
+        return "+-*/^".contains(token);
+    }
+
+    private static double calculate(double operand1, double operand2, String operator) {
+        switch (operator) {
+            case "+":
+                return operand1 + operand2;
+            case "-":
+                return operand1 - operand2;
+            case "*":
+                return operand1 * operand2;
+            case "/":
+                if (operand2 == 0) throw new UnsupportedOperationException("Cannot divide by zero.");
+                return operand1 / operand2;
+            case "^":
+                return Math.pow(operand1, operand2);
+            default:
+                throw new IllegalArgumentException("Unsupported operator: " + operator);
+        }
+    }
+
+    public static void main(String[] args) {
+        try {
+            String postfix = "3 4 2 * 1 5 - 2 ^ / +"; // 예제 후위 표현식
+            System.out.printf("Postfix: %s%nResult: %.2f%n", postfix, eval(postfix));
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+        }
     }
 }
