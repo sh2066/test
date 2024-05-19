@@ -1,349 +1,75 @@
 package calc1234;
 
 import java.util.Stack;
-import java.util.StringTokenizer;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Infix2Postfix {
     public static String convert(String exp) {
         if (exp == null || exp.length() == 0) return null;
-        StringTokenizer st = new StringTokenizer(exp, "+-*/^()", true);
-        Stack<String> stack = new Stack<String>();
-        StringBuffer buf = new StringBuffer();
 
-        while (st.hasMoreTokens()) {
-            String tok = st.nextToken();
-            if (opType(tok) > 0) {
-                if (tok.equals("(")) {
-                    stack.push(tok);
-                } else if (tok.equals(")")) {
-                    while (!stack.isEmpty() && !stack.peek().equals("(")) {
-                        buf.append(stack.pop()).append(" ");
-                    }
-                    if (!stack.isEmpty() && stack.peek().equals("(")) {
-                        stack.pop(); // 여는 괄호 제거
-                    }
-                } else {
-                    while (!stack.empty()) {
-                        String op2 = stack.peek();
-                        int p1 = getPriority(tok.charAt(0));
-                        int p2 = getPriority(op2.charAt(0));
-                        if (p1 <= p2) {
-                            buf.append(stack.pop()).append(" ");
-                        } else {
-                            break;
-                        }
-                    }
-                    stack.push(tok);
+        List<String> tokens = tokenize(exp);
+        Stack<String> stack = new Stack<>();
+        StringBuilder output = new StringBuilder();
+
+        for (String token : tokens) {
+            if (isOperator(token)) {
+                while (!stack.isEmpty() && getPriority(token) <= getPriority(stack.peek())) {
+                    output.append(stack.pop() + " ");
                 }
+                stack.push(token);
+            } else if (token.equals("(")) {
+                stack.push(token);
+            } else if (token.equals(")")) {
+                while (!stack.isEmpty() && !stack.peek().equals("(")) {
+                    output.append(stack.pop() + " ");
+                }
+                if (!stack.isEmpty()) stack.pop();
             } else {
-                buf.append(tok).append(" ");
+                output.append(token + " ");
             }
         }
 
-        while (!stack.empty()) {
-            buf.append(stack.pop()).append(" ");
+        while (!stack.isEmpty()) {
+            output.append(stack.pop() + " ");
         }
-        return buf.toString().trim();
+        return output.toString().trim();
     }
 
-    public static int opType(String op) {
-        op = op.trim();
-        if (op.length() > 1 || op.length() == 0) {
-            return -1;
+    private static List<String> tokenize(String exp) {
+        List<String> tokens = new ArrayList<>();
+        // 수정된 패턴: 음수 포함 숫자를 정확하게 처리
+        Pattern pattern = Pattern.compile("-?\\b\\d+\\.?\\d*|[-+*/^()]");
+        Matcher matcher = pattern.matcher(exp);
+        while (matcher.find()) {
+            tokens.add(matcher.group());
         }
-        char c = op.charAt(0);
-        switch (c) {
-            case '+': return 1;
-            case '-': return 2;
-            case '*': return 3;
-            case '/': return 4;
-            case '(': return 5;
-            case ')': return 6;
-            case '^': return 7; // 제곱 연산자 처리 추가
-        }
-        return -1;
+        return tokens;
     }
 
-    private static int getPriority(char op) {
+    private static boolean isOperator(String token) {
+        return "+-*/^".contains(token) && token.length() == 1;
+    }
+
+    private static int getPriority(String op) {
         switch (op) {
-            case '+':
-            case '-':
+            case "+":
+            case "-":
                 return 1;
-            case '*':
-            case '/':
+            case "*":
+            case "/":
                 return 2;
-            case '^':
-                return 3; // 제곱 연산을 가장 높은 우선순위로 설정
-            case '(':
-                return 0;
+            case "^":
+                return 3;
             default:
                 return -1;
         }
     }
 
     public static void main(String[] args) {
-        String exp = "3 + 4 * 2 / (1 - 5) ^ 2";
-        System.out.printf("%s => %s%n", exp, convert(exp));
-    }
-}package calc1234;
-
-import java.util.Stack;
-import java.util.StringTokenizer;
-
-public class Infix2Postfix {
-    public static String convert(String exp) {
-        if (exp == null || exp.length() == 0) return null;
-        StringTokenizer st = new StringTokenizer(exp, "+-*/^()", true);
-        Stack<String> stack = new Stack<String>();
-        StringBuffer buf = new StringBuffer();
-
-        while (st.hasMoreTokens()) {
-            String tok = st.nextToken();
-            if (opType(tok) > 0) {
-                if (tok.equals("(")) {
-                    stack.push(tok);
-                } else if (tok.equals(")")) {
-                    while (!stack.isEmpty() && !stack.peek().equals("(")) {
-                        buf.append(stack.pop()).append(" ");
-                    }
-                    if (!stack.isEmpty() && stack.peek().equals("(")) {
-                        stack.pop(); // 여는 괄호 제거
-                    }
-                } else {
-                    while (!stack.empty()) {
-                        String op2 = stack.peek();
-                        int p1 = getPriority(tok.charAt(0));
-                        int p2 = getPriority(op2.charAt(0));
-                        if (p1 <= p2) {
-                            buf.append(stack.pop()).append(" ");
-                        } else {
-                            break;
-                        }
-                    }
-                    stack.push(tok);
-                }
-            } else {
-                buf.append(tok).append(" ");
-            }
-        }
-
-        while (!stack.empty()) {
-            buf.append(stack.pop()).append(" ");
-        }
-        return buf.toString().trim();
-    }
-
-    public static int opType(String op) {
-        op = op.trim();
-        if (op.length() > 1 || op.length() == 0) {
-            return -1;
-        }
-        char c = op.charAt(0);
-        switch (c) {
-            case '+': return 1;
-            case '-': return 2;
-            case '*': return 3;
-            case '/': return 4;
-            case '(': return 5;
-            case ')': return 6;
-            case '^': return 7; // 제곱 연산자 처리 추가
-        }
-        return -1;
-    }
-
-    private static int getPriority(char op) {
-        switch (op) {
-            case '+':
-            case '-':
-                return 1;
-            case '*':
-            case '/':
-                return 2;
-            case '^':
-                return 3; // 제곱 연산을 가장 높은 우선순위로 설정
-            case '(':
-                return 0;
-            default:
-                return -1;
-        }
-    }
-
-    public static void main(String[] args) {
-        String exp = "3 + 4 * 2 / (1 - 5) ^ 2";
-        System.out.printf("%s => %s%n", exp, convert(exp));
-    }
-}package calc1234;
-
-import java.util.Stack;
-import java.util.StringTokenizer;
-
-public class Infix2Postfix {
-    public static String convert(String exp) {
-        if (exp == null || exp.length() == 0) return null;
-        StringTokenizer st = new StringTokenizer(exp, "+-*/^()", true);
-        Stack<String> stack = new Stack<String>();
-        StringBuffer buf = new StringBuffer();
-
-        while (st.hasMoreTokens()) {
-            String tok = st.nextToken();
-            if (opType(tok) > 0) {
-                if (tok.equals("(")) {
-                    stack.push(tok);
-                } else if (tok.equals(")")) {
-                    while (!stack.isEmpty() && !stack.peek().equals("(")) {
-                        buf.append(stack.pop()).append(" ");
-                    }
-                    if (!stack.isEmpty() && stack.peek().equals("(")) {
-                        stack.pop(); // 여는 괄호 제거
-                    }
-                } else {
-                    while (!stack.empty()) {
-                        String op2 = stack.peek();
-                        int p1 = getPriority(tok.charAt(0));
-                        int p2 = getPriority(op2.charAt(0));
-                        if (p1 <= p2) {
-                            buf.append(stack.pop()).append(" ");
-                        } else {
-                            break;
-                        }
-                    }
-                    stack.push(tok);
-                }
-            } else {
-                buf.append(tok).append(" ");
-            }
-        }
-
-        while (!stack.empty()) {
-            buf.append(stack.pop()).append(" ");
-        }
-        return buf.toString().trim();
-    }
-
-    public static int opType(String op) {
-        op = op.trim();
-        if (op.length() > 1 || op.length() == 0) {
-            return -1;
-        }
-        char c = op.charAt(0);
-        switch (c) {
-            case '+': return 1;
-            case '-': return 2;
-            case '*': return 3;
-            case '/': return 4;
-            case '(': return 5;
-            case ')': return 6;
-            case '^': return 7; // 제곱 연산자 처리 추가
-        }
-        return -1;
-    }
-
-    private static int getPriority(char op) {
-        switch (op) {
-            case '+':
-            case '-':
-                return 1;
-            case '*':
-            case '/':
-                return 2;
-            case '^':
-                return 3; // 제곱 연산을 가장 높은 우선순위로 설정
-            case '(':
-                return 0;
-            default:
-                return -1;
-        }
-    }
-
-    public static void main(String[] args) {
-        String exp = "3 + 4 * 2 / (1 - 5) ^ 2";
-        System.out.printf("%s => %s%n", exp, convert(exp));
-    }
-}package calc1234;
-
-import java.util.Stack;
-import java.util.StringTokenizer;
-
-public class Infix2Postfix {
-    public static String convert(String exp) {
-        if (exp == null || exp.length() == 0) return null;
-        StringTokenizer st = new StringTokenizer(exp, "+-*/^()", true);
-        Stack<String> stack = new Stack<String>();
-        StringBuffer buf = new StringBuffer();
-
-        while (st.hasMoreTokens()) {
-            String tok = st.nextToken();
-            if (opType(tok) > 0) {
-                if (tok.equals("(")) {
-                    stack.push(tok);
-                } else if (tok.equals(")")) {
-                    while (!stack.isEmpty() && !stack.peek().equals("(")) {
-                        buf.append(stack.pop()).append(" ");
-                    }
-                    if (!stack.isEmpty() && stack.peek().equals("(")) {
-                        stack.pop(); // 여는 괄호 제거
-                    }
-                } else {
-                    while (!stack.empty()) {
-                        String op2 = stack.peek();
-                        int p1 = getPriority(tok.charAt(0));
-                        int p2 = getPriority(op2.charAt(0));
-                        if (p1 <= p2) {
-                            buf.append(stack.pop()).append(" ");
-                        } else {
-                            break;
-                        }
-                    }
-                    stack.push(tok);
-                }
-            } else {
-                buf.append(tok).append(" ");
-            }
-        }
-
-        while (!stack.empty()) {
-            buf.append(stack.pop()).append(" ");
-        }
-        return buf.toString().trim();
-    }
-
-    public static int opType(String op) {
-        op = op.trim();
-        if (op.length() > 1 || op.length() == 0) {
-            return -1;
-        }
-        char c = op.charAt(0);
-        switch (c) {
-            case '+': return 1;
-            case '-': return 2;
-            case '*': return 3;
-            case '/': return 4;
-            case '(': return 5;
-            case ')': return 6;
-            case '^': return 7; // 제곱 연산자 처리 추가
-        }
-        return -1;
-    }
-
-    private static int getPriority(char op) {
-        switch (op) {
-            case '+':
-            case '-':
-                return 1;
-            case '*':
-            case '/':
-                return 2;
-            case '^':
-                return 3; // 제곱 연산을 가장 높은 우선순위로 설정
-            case '(':
-                return 0;
-            default:
-                return -1;
-        }
-    }
-
-    public static void main(String[] args) {
-        String exp = "3 + 4 * 2 / (1 - 5) ^ 2";
+        String exp = "3 + 4 * 2 / (-1 - 5) ^ 2";
         System.out.printf("%s => %s%n", exp, convert(exp));
     }
 }
